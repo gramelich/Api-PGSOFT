@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # Banco de Dados MySQL
+  database:
+    image: mysql:8.0
+    container_name: pgsoft_database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword123
+      MYSQL_DATABASE: pgsoft_api
+      MYSQL_USER: pgsoft_user
+      MYSQL_PASSWORD: pgsoft_pass_2024
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./apidb.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - pgsoft_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Cache Redis
+  redis:
+    image: redis:7-alpine
+    container_name: pgsoft_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - pgsoft_network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+
+  # API Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: pgsoft_api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_URL: http://localhost:3000
+      
+      # Database
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: pgsoft_api
+      DB_USER: pgsoft_user
+      DB_PASSWORD: pgsoft_pass_2024
+      
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # JWT
+      JWT_SECRET: seu_jwt_secret_super_seguro_aqui_123456
+      JWT_EXPIRES_IN: 7d
+      
+      # Configurações dos Jogos
+      DEFAULT_RTP: 96.5
+      MIN_BET: 0.10
+      MAX_BET: 1000.00
+      
+      # CORS
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:80
+      
+      # Logs
+      LOG_LEVEL: info
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - pgsoft_network
+    volumes:
+      - ./logs:/app/logs
+
+  # Frontend Web
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: pgsoft_frontend
+    restart: always
+    ports:
+      - "3001:80"
+    environment:
+      REACT_APP_API_URL: http://localhost:3000/api
+    depends_on:
+      - api
+    networks:
+      - pgsoft_network
+
+  # Nginx Reverse Proxy (Opcional - produção)
+  nginx:
+    image: nginx:alpine
+    container_name: pgsoft_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - pgsoft_network
+
+  # Adminer - Interface de gerenciamento do banco
+  adminer:
+    image: adminer:latest
+    container_name: pgsoft_adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: database
+    depends_on:
+      - database
+    networks:
+      - pgsoft_network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  pgsoft_network:
+    driver: bridge
