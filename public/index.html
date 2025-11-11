@@ -1,92 +1,129 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PGSoft API Dashboard</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { margin: 0; padding: 0; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PGSoft API Dashboard</title>
+
+  <!-- React -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- TailwindCSS (ok para protótipo) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+  <div id="root" class="min-h-screen flex items-center justify-center"></div>
 
-        // Usa a mesma URL da API (caminho relativo)
-        const API_BASE_URL = '';
+  <script type="text/javascript">
+    const { useState, useEffect } = React;
 
-        function PGSoftAPIFrontend() {
-          const [activeTab, setActiveTab] = useState('games');
-          const [games, setGames] = useState([]);
-          const [loading, setLoading] = useState(false);
-          const [apiResponse, setApiResponse] = useState(null);
-          const [playerToken, setPlayerToken] = useState('');
-          const [balance, setBalance] = useState(1000);
+    function PGSoftAPIFrontend() {
+      const [activeTab, setActiveTab] = useState('games');
+      const [games, setGames] = useState([]);
+      const [loading, setLoading] = useState(false);
+      const [apiResponse, setApiResponse] = useState(null);
+      const [playerToken, setPlayerToken] = useState('');
+      const [balance, setBalance] = useState(1000);
 
-          const [apiConfig, setApiConfig] = useState({
-            operatorToken: '',
-            operatorId: '',
-            secretKey: ''
-          });
+      const [apiConfig, setApiConfig] = useState({
+        operatorToken: '',
+        operatorId: '',
+        secretKey: ''
+      });
 
-          const pgGames = [
-            { id: '1', name: 'Fortune Tiger', icon: '🐯' },
-            { id: '2', name: 'Fortune Rabbit', icon: '🐰' },
-            { id: '3', name: 'Fortune Ox', icon: '🐂' },
-            { id: '4', name: 'Fortune Mouse', icon: '🐭' },
-            { id: '5', name: 'Ganesha Fortune', icon: '🐘' },
-            { id: '6', name: 'Wild Bounty Showdown', icon: '🤠' },
-            { id: '7', name: 'Candy Bonanza', icon: '🍬' },
-            { id: '8', name: 'Bikini Paradise', icon: '🏖️' },
-            { id: '9', name: 'Dragon Hatch', icon: '🥚' },
-            { id: '10', name: 'Mahjong Ways 2', icon: '🀄' }
-          ];
+      const pgGames = [
+        { id: '1', name: 'Fortune Tiger', icon: '🐯' },
+        { id: '2', name: 'Fortune Rabbit', icon: '🐰' },
+        { id: '3', name: 'Fortune Ox', icon: '🐂' },
+        { id: '4', name: 'Fortune Mouse', icon: '🐭' },
+        { id: '5', name: 'Ganesha Fortune', icon: '🐘' },
+        { id: '6', name: 'Wild Bounty Showdown', icon: '🤠' },
+        { id: '7', name: 'Candy Bonanza', icon: '🍬' },
+        { id: '8', name: 'Bikini Paradise', icon: '🏖️' },
+        { id: '9', name: 'Dragon Hatch', icon: '🥚' },
+        { id: '10', name: 'Mahjong Ways 2', icon: '🀄' }
+      ];
 
-          useEffect(() => {
-            setGames(pgGames);
-          }, []);
+      useEffect(() => {
+        setGames(pgGames);
+        // Testa o endpoint /status ao carregar
+        makeAPICall('/status');
+      }, []);
 
-          const makeAPICall = async (endpoint, method = 'GET', body = null) => {
-            setLoading(true);
-            try {
-              const options = {
-                method,
-                headers: {
-                  'Content-Type': 'application/json',
-                }
-              };
-
-              if (body) {
-                options.body = JSON.stringify(body);
-              }
-
-              const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-              const data = await response.json();
-              
-              setApiResponse({
-                status: response.status,
-                data: data,
-                endpoint: endpoint,
-                method: method,
-                timestamp: new Date().toISOString()
-              });
-              
-              return data;
-            } catch (error) {
-              setApiResponse({
-                error: error.message,
-                endpoint: endpoint,
-                method: method,
-                timestamp: new Date().toISOString()
-              });
-            } finally {
-              setLoading(false);
-            }
+      const makeAPICall = async (endpoint, method = 'GET', body = null) => {
+        setLoading(true);
+        try {
+          const options = {
+            method,
+            headers: { 'Content-Type': 'application/json' },
           };
 
-          const testEndpoint
+          if (body) options.body = JSON.stringify(body);
+
+          const response = await fetch(endpoint, options);
+          const data = await response.json();
+
+          setApiResponse({
+            status: response.status,
+            data: data,
+            endpoint: endpoint,
+            method: method,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (error) {
+          setApiResponse({
+            error: error.message,
+            endpoint: endpoint,
+            method: method,
+            timestamp: new Date().toISOString(),
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        React.createElement('div', { className: 'p-8 max-w-3xl w-full' },
+          React.createElement('h1', { className: 'text-3xl font-bold mb-6 text-center' }, 'PGSoft API Dashboard'),
+
+          React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8' },
+            games.map((game) =>
+              React.createElement('button', {
+                key: game.id,
+                className: `p-4 rounded-xl border border-slate-600 hover:bg-slate-700 transition ${activeTab === game.id ? 'bg-slate-700' : ''}`,
+                onClick: () => setActiveTab(game.id),
+              },
+                React.createElement('div', { className: 'text-4xl' }, game.icon),
+                React.createElement('div', { className: 'text-sm mt-2' }, game.name)
+              )
+            )
+          ),
+
+          loading
+            ? React.createElement('p', { className: 'text-center text-yellow-400' }, 'Carregando...')
+            : apiResponse
+              ? React.createElement('pre', {
+                  className: 'bg-slate-800 p-4 rounded-xl text-xs overflow-auto',
+                }, JSON.stringify(apiResponse, null, 2))
+              : React.createElement('p', { className: 'text-center text-slate-400' }, 'Clique em um jogo ou teste a API.')
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      React.createElement(PGSoftAPIFrontend)
+    );
+  </script>
+</body>
+</html>
