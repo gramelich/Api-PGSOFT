@@ -9,7 +9,7 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-  <!-- TailwindCSS (ok para protótipo) -->
+  <!-- TailwindCSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -27,101 +27,140 @@
 
   <script type="text/javascript">
     const { useState, useEffect } = React;
+    const API_BASE_URL = "https://pg-api-pg.rkfmzx.easypanel.host";
 
     function PGSoftAPIFrontend() {
-      const [activeTab, setActiveTab] = useState('games');
       const [games, setGames] = useState([]);
       const [loading, setLoading] = useState(false);
       const [apiResponse, setApiResponse] = useState(null);
-      const [playerToken, setPlayerToken] = useState('');
-      const [balance, setBalance] = useState(1000);
-
-      const [apiConfig, setApiConfig] = useState({
-        operatorToken: '',
-        operatorId: '',
-        secretKey: ''
-      });
+      const [selectedGame, setSelectedGame] = useState(null);
 
       const pgGames = [
-        { id: '1', name: 'Fortune Tiger', icon: '🐯' },
-        { id: '2', name: 'Fortune Rabbit', icon: '🐰' },
-        { id: '3', name: 'Fortune Ox', icon: '🐂' },
-        { id: '4', name: 'Fortune Mouse', icon: '🐭' },
-        { id: '5', name: 'Ganesha Fortune', icon: '🐘' },
-        { id: '6', name: 'Wild Bounty Showdown', icon: '🤠' },
-        { id: '7', name: 'Candy Bonanza', icon: '🍬' },
-        { id: '8', name: 'Bikini Paradise', icon: '🏖️' },
-        { id: '9', name: 'Dragon Hatch', icon: '🥚' },
-        { id: '10', name: 'Mahjong Ways 2', icon: '🀄' }
+        { id: "fortune-tiger", name: "Fortune Tiger", icon: "🐯" },
+        { id: "fortune-rabbit", name: "Fortune Rabbit", icon: "🐰" },
+        { id: "fortune-ox", name: "Fortune Ox", icon: "🐂" },
+        { id: "fortune-mouse", name: "Fortune Mouse", icon: "🐭" },
+        { id: "ganesha-gold", name: "Ganesha Gold", icon: "🐘" },
+        { id: "double-fortune", name: "Wild Bounty Showdown", icon: "🤠" },
+        { id: "jungle-delight", name: "Candy Bonanza", icon: "🍬" },
+        { id: "bikine-paradise", name: "Bikini Paradise", icon: "🏖️" },
+        { id: "fortune-dragon", name: "Dragon Hatch", icon: "🐉" },
+        { id: "dragon-tiger-luck", name: "Mahjong Ways 2", icon: "🀄" },
       ];
 
       useEffect(() => {
         setGames(pgGames);
-        // Testa o endpoint /status ao carregar
-        makeAPICall('/status');
       }, []);
 
-      const makeAPICall = async (endpoint, method = 'GET', body = null) => {
+      const makeAPICall = async (endpoint, method = "POST", body = null) => {
         setLoading(true);
         try {
-          const options = {
+          const response = await fetch(API_BASE_URL + endpoint, {
             method,
-            headers: { 'Content-Type': 'application/json' },
-          };
-
-          if (body) options.body = JSON.stringify(body);
-
-          const response = await fetch(endpoint, options);
-          const data = await response.json();
-
-          setApiResponse({
-            status: response.status,
-            data: data,
-            endpoint: endpoint,
-            method: method,
-            timestamp: new Date().toISOString(),
+            headers: { "Content-Type": "application/json" },
+            body: body ? JSON.stringify(body) : undefined,
           });
-        } catch (error) {
+
+          const data = await response.json();
           setApiResponse({
-            error: error.message,
-            endpoint: endpoint,
-            method: method,
-            timestamp: new Date().toISOString(),
+            endpoint,
+            method,
+            status: response.status,
+            data,
+            timestamp: new Date().toLocaleString(),
+          });
+        } catch (err) {
+          setApiResponse({
+            endpoint,
+            error: err.message,
+            timestamp: new Date().toLocaleString(),
           });
         } finally {
           setLoading(false);
         }
       };
 
-      return (
-        React.createElement('div', { className: 'p-8 max-w-3xl w-full' },
-          React.createElement('h1', { className: 'text-3xl font-bold mb-6 text-center' }, 'PGSoft API Dashboard'),
+      const handleGameInfo = (game) => {
+        setSelectedGame(game);
+        makeAPICall(`/game-api/${game.id}/v2/GameInfo/Get`);
+      };
 
-          React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-8' },
-            games.map((game) =>
-              React.createElement('button', {
+      const handleSpin = (game) => {
+        makeAPICall(`/game-api/${game.id}/v2/Spin`);
+      };
+
+      return React.createElement(
+        "div",
+        { className: "p-8 max-w-5xl w-full" },
+        React.createElement(
+          "h1",
+          { className: "text-3xl font-bold mb-6 text-center" },
+          "🎰 PGSoft API Dashboard"
+        ),
+
+        React.createElement(
+          "div",
+          { className: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8" },
+          games.map((game) =>
+            React.createElement(
+              "button",
+              {
                 key: game.id,
-                className: `p-4 rounded-xl border border-slate-600 hover:bg-slate-700 transition ${activeTab === game.id ? 'bg-slate-700' : ''}`,
-                onClick: () => setActiveTab(game.id),
+                className: `p-4 rounded-xl border border-slate-600 hover:bg-slate-700 transition ${
+                  selectedGame && selectedGame.id === game.id ? "bg-slate-700" : ""
+                }`,
+                onClick: () => handleGameInfo(game),
               },
-                React.createElement('div', { className: 'text-4xl' }, game.icon),
-                React.createElement('div', { className: 'text-sm mt-2' }, game.name)
-              )
+              React.createElement("div", { className: "text-4xl" }, game.icon),
+              React.createElement("div", { className: "text-sm mt-2" }, game.name)
+            )
+          )
+        ),
+
+        selectedGame &&
+          React.createElement(
+            "div",
+            { className: "mb-6 text-center" },
+            React.createElement(
+              "h2",
+              { className: "text-xl font-semibold mb-2" },
+              `🎮 ${selectedGame.name}`
+            ),
+            React.createElement(
+              "button",
+              {
+                className:
+                  "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition",
+                onClick: () => handleSpin(selectedGame),
+              },
+              "🎯 Fazer SPIN"
             )
           ),
 
-          loading
-            ? React.createElement('p', { className: 'text-center text-yellow-400' }, 'Carregando...')
-            : apiResponse
-              ? React.createElement('pre', {
-                  className: 'bg-slate-800 p-4 rounded-xl text-xs overflow-auto',
-                }, JSON.stringify(apiResponse, null, 2))
-              : React.createElement('p', { className: 'text-center text-slate-400' }, 'Clique em um jogo ou teste a API.')
-        )
+        loading
+          ? React.createElement(
+              "p",
+              { className: "text-center text-yellow-400" },
+              "Carregando..."
+            )
+          : apiResponse
+          ? React.createElement(
+              "pre",
+              {
+                className:
+                  "bg-slate-800 p-4 rounded-xl text-xs overflow-auto max-h-[400px]",
+              },
+              JSON.stringify(apiResponse, null, 2)
+            )
+          : React.createElement(
+              "p",
+              { className: "text-center text-slate-400" },
+              "Selecione um jogo para começar."
+            )
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(
+    ReactDOM.createRoot(document.getElementById("root")).render(
       React.createElement(PGSoftAPIFrontend)
     );
   </script>
