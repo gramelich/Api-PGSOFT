@@ -20,117 +20,26 @@ const io = new Server(httpServer);
 
 console.log(figlet.textSync("API DE JOGOS JOHN"), "\n");
 
-// --- Tipagem express customizada ---
-declare module "express-serve-static-core" {
-  interface Request {
-    io: Server;
-  }
-}
+// --- CORS com origem exata ---
+const allowedOrigin = process.env.ALLOWED_ORIGINS || "https://apipg.gramelich.online";
 
-const users = new Map<string, any>();
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true
+}));
 
-io.on("connection", async (socket: Socket) => {
-  console.log("Usuário Conectado");
-
-  socket.on("join", async (socket1) => {
-    const token: any = socket1.token;
-    const gameid: any = socket1.gameId;
-
-    setInterval(async function () {
-      const user = await allfunctions.getuserbytoken(token);
-
-      if (!user[0]) {
-        socket.disconnect(true);
-        return false;
-      }
-
-      const retornado = user[0].valorganho;
-      const valorapostado = user[0].valorapostado;
-      const rtp = Math.round((retornado / valorapostado) * 100);
-
-      if (isNaN(rtp) === false) {
-        await allfunctions.updatertp(token, rtp);
-      }
-    }, 10000);
-  });
-
-  adicionarListener("attganho", async (dados) => {
-    users.forEach(async (valor, chave) => {
-      let newvalue = parseFloat(users.get(socket.id).aw) + dados.aw;
-      users.set(socket.id, {
-        aw: newvalue,
-      });
-    });
-    emitirEventoInterno("awreceive", {
-      aw: users.get(socket.id).aw,
-    });
-  });
-
-  adicionarListener("att", (dados) => {
-    users.forEach((valor, chave) => {
-      if (valor.token === dados.token) {
-        return false;
-      } else {
-        users.set(socket.id, {
-          token: dados.token,
-          username: dados.username,
-          bet: dados.bet,
-          saldo: dados.saldo,
-          rtp: dados.rtp,
-          agentid: dados.agentid,
-          socketid: socket.id,
-          gamecode: dados.gamecode,
-          aw: 0,
-        });
-      }
-    });
-
-    if (Object.keys(users).length === 0) {
-      users.set(socket.id, {
-        token: dados.token,
-        username: dados.username,
-        bet: dados.bet,
-        saldo: dados.saldo,
-        rtp: dados.rtp,
-        agentid: dados.agentid,
-        socketid: socket.id,
-        gamecode: dados.gamecode,
-        aw: 0,
-      });
-    }
-  });
-
-  socket.on("disconnect", (reason) => {
-    users.delete(socket.id);
-    console.log("Cliente desconectado:", reason);
-  });
-});
-
-// --- Middleware para injetar o Socket.IO nas requisições ---
-app.use((req: Request, res: Response, next) => {
-  req.io = io;
-  next();
-});
-
-// --- Middlewares padrão ---
-app.use(cors());
+// --- Middlewares ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// --- Caminho absoluto da pasta public ---
-// 🔹 Quando o projeto está compilado (dist/), o `__dirname` é `dist`
-// 🔹 Então precisamos subir um nível para acessar a pasta "public"
+// --- Caminho público ---
 const publicPath = path.join(__dirname, "../public");
-
-// --- Servir arquivos estáticos ---
 app.use(express.static(publicPath));
-
-// --- Rota principal para abrir o index.html ---
 app.get("/", (req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 
-// --- Helmet CSP (opcionalmente ajustado para CDN e JS locais) ---
+// --- Helmet CSP (ajustado para produção) ---
 app.use(
   helmet.contentSecurityPolicy({
     useDefaults: false,
@@ -141,23 +50,87 @@ app.use(
       "frame-ancestors": ["'self'"],
       "img-src": ["'self'", "data:", "blob:"],
       "object-src": ["'none'"],
-      "script-src": ["'self'", "https:", "blob:"],
+      "script-src": ["'self'", "https://cdnjs.cloudflare.com"],
       "script-src-attr": ["'none'"],
-      "style-src": ["'self'", "https:", "'unsafe-inline'"],
+      "style-src": ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
     },
   })
 );
 
-// --- Status simples ---
+// --- Tipagem express customizada ---
+declare module "express-serve-static-core" {
+  interface Request {
+    io: Server;
+  }
+}
+
+// --- Socket.IO ---
+const users = new Map<string, any>();
+
+io.on("connection", async (socket: Socket) => {
+  console.log("Usuário Conectado");
+
+  socket.on("join", async (socket1: any) => {
+    const token: string = socket1.token;
+    setInterval(async () => {
+      const user = await allfunctions.getuserbytoken(token);
+      if (!user[0]) {
+        socket.disconnect(true);
+        return;
+      }
+      const retornado = user[0].valorganho;
+      const valorapostado = user[0].valorapostado;
+      const rtp = Math.round((retornado / valorapostado) * 100);
+      if (!isNaN(rtp)) {
+        await allfunctions.updatertp(token, rtp);
+      }
+    }, 10000);
+  });
+
+  adicionarListener("attganho", async (dados) => {
+    const current = users.get(socket.id);
+    if (current) {
+      const newvalue = parseFloat(current.aw || 0) + dados.aw;
+      users.set(socket.id, { ...current, aw: newvalue });
+      emitirEventoInterno("awreceive", { aw: newvalue });
+    }
+  });
+
+  adicionarListener("att", (dados) => {
+    users.set(socket.id, {
+      token: dados.token,
+      username: dados.username,
+      bet: dados.bet,
+      saldo: dados.saldo,
+      rtp: dados.rtp,
+      agentid: dados.agentid,
+      socketid: socket.id,
+      gamecode: dados.gamecode,
+      aw: 0,
+    });
+  });
+
+  socket.on("disconnect", (reason) => {
+    users.delete(socket.id);
+    console.log("Cliente desconectado:", reason);
+  });
+});
+
+// --- Middleware para injetar o Socket.IO ---
+app.use((req: Request, res: Response, next) => {
+  req.io = io;
+  next();
+});
+
+// --- Rotas ---
 app.use("/status", (req, res) => {
   res.json({ status: "operational" });
 });
-
-// --- Suas rotas principais ---
 app.use(routes);
 
-// --- Inicializa o servidor ---
-httpServer.listen(process.env.PORT || 3000, () => {
-  logger.info("SERVIDOR INICIADO API JOHN " + process.env.PORT);
-  console.log(`🌐 Servindo arquivos de: ${publicPath}`);
+// --- Iniciar servidor ---
+const PORT = process.env.PORT || 3000;
+httpServer.listen(PORT, () => {
+  logger.info(`SERVIDOR INICIADO NA PORTA ${PORT}`);
+  console.log(`Servindo arquivos de: ${publicPath}`);
 });
