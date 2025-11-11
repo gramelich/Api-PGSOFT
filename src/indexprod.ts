@@ -136,17 +136,18 @@ app.use(
       useDefaults: false,
       directives: {
          "default-src": ["'none'"],
-         "base-uri": "'self'"],
+         "base-uri": ["'self'"],
          "font-src": ["'self'", "https:", "data:"],
          "frame-ancestors": ["'self'"],
          "img-src": ["'self'", "data:"],
          "object-src": ["'none'"],
          "script-src": ["'self'", "https://cdnjs.cloudflare.com"],
-         "script-src-attr": "'none'"],
+         "script-src-attr": ["'none'"],
          "style-src": ["'self'", "https://cdnjs.cloudflare.com"],
       },
    }),
 )
+
 
 app.use("/status", (req, res) => {
    res.json({ status: "operational" })
