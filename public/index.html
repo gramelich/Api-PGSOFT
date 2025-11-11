@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PGSoft API Dashboard</title>
+  <title>PGSoft API Debug Dashboard</title>
 
   <!-- React -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -20,6 +20,10 @@
       color: #e2e8f0;
       font-family: 'Inter', sans-serif;
     }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
   </style>
 </head>
 <body>
@@ -29,90 +33,93 @@
     const { useState, useEffect } = React;
     const API_BASE_URL = "https://pg-api-pg.rkfmzx.easypanel.host";
 
-    function PGSoftAPIFrontend() {
-      const [games, setGames] = useState([]);
-      const [loading, setLoading] = useState(false);
-      const [apiResponse, setApiResponse] = useState(null);
-      const [selectedGame, setSelectedGame] = useState(null);
-
-      const pgGames = [
+    function PGSoftDashboard() {
+      const [games] = useState([
         { id: "fortune-tiger", name: "Fortune Tiger", icon: "🐯" },
         { id: "fortune-rabbit", name: "Fortune Rabbit", icon: "🐰" },
         { id: "fortune-ox", name: "Fortune Ox", icon: "🐂" },
         { id: "fortune-mouse", name: "Fortune Mouse", icon: "🐭" },
         { id: "ganesha-gold", name: "Ganesha Gold", icon: "🐘" },
-        { id: "double-fortune", name: "Wild Bounty Showdown", icon: "🤠" },
-        { id: "jungle-delight", name: "Candy Bonanza", icon: "🍬" },
         { id: "bikine-paradise", name: "Bikini Paradise", icon: "🏖️" },
         { id: "fortune-dragon", name: "Dragon Hatch", icon: "🐉" },
         { id: "dragon-tiger-luck", name: "Mahjong Ways 2", icon: "🀄" },
-      ];
+      ]);
 
-      useEffect(() => {
-        setGames(pgGames);
-      }, []);
+      const [selectedGame, setSelectedGame] = useState(null);
+      const [logs, setLogs] = useState([]);
+      const [loading, setLoading] = useState(false);
+
+      const log = (msg, data = null) => {
+        console.log(msg, data || "");
+        setLogs(prev => [
+          { time: new Date().toLocaleTimeString(), msg, data },
+          ...prev,
+        ]);
+      };
 
       const makeAPICall = async (endpoint, method = "POST", body = null) => {
+        const url = API_BASE_URL + endpoint;
         setLoading(true);
+        const start = Date.now();
+        log(`➡️ Chamando ${method} ${url}`, body);
+
         try {
-          const response = await fetch(API_BASE_URL + endpoint, {
+          const response = await fetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
             body: body ? JSON.stringify(body) : undefined,
           });
 
-          const data = await response.json();
-          setApiResponse({
-            endpoint,
-            method,
-            status: response.status,
-            data,
-            timestamp: new Date().toLocaleString(),
-          });
-        } catch (err) {
-          setApiResponse({
-            endpoint,
-            error: err.message,
-            timestamp: new Date().toLocaleString(),
-          });
+          const elapsed = Date.now() - start;
+          const text = await response.text();
+          let parsed;
+          try {
+            parsed = JSON.parse(text);
+          } catch {
+            parsed = text;
+          }
+
+          log(`✅ Resposta (${response.status}) em ${elapsed}ms`, parsed);
+        } catch (error) {
+          log(`❌ Erro na requisição: ${error.message}`);
         } finally {
           setLoading(false);
         }
       };
 
-      const handleGameInfo = (game) => {
-        setSelectedGame(game);
-        makeAPICall(`/game-api/${game.id}/v2/GameInfo/Get`);
+      const handleGameInfo = (g) => {
+        setSelectedGame(g);
+        makeAPICall(`/game-api/${g.id}/v2/GameInfo/Get`);
       };
 
-      const handleSpin = (game) => {
-        makeAPICall(`/game-api/${game.id}/v2/Spin`);
+      const handleSpin = (g) => {
+        makeAPICall(`/game-api/${g.id}/v2/Spin`);
       };
 
       return React.createElement(
         "div",
-        { className: "p-8 max-w-5xl w-full" },
+        { className: "p-6 max-w-6xl w-full" },
         React.createElement(
           "h1",
-          { className: "text-3xl font-bold mb-6 text-center" },
-          "🎰 PGSoft API Dashboard"
+          { className: "text-3xl font-bold mb-4 text-center" },
+          "🎰 PGSoft API Debug Dashboard"
         ),
 
         React.createElement(
           "div",
-          { className: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8" },
-          games.map((game) =>
+          { className: "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-6" },
+          games.map((g) =>
             React.createElement(
               "button",
               {
-                key: game.id,
+                key: g.id,
                 className: `p-4 rounded-xl border border-slate-600 hover:bg-slate-700 transition ${
-                  selectedGame && selectedGame.id === game.id ? "bg-slate-700" : ""
+                  selectedGame && selectedGame.id === g.id ? "bg-slate-700" : ""
                 }`,
-                onClick: () => handleGameInfo(game),
+                onClick: () => handleGameInfo(g),
               },
-              React.createElement("div", { className: "text-4xl" }, game.icon),
-              React.createElement("div", { className: "text-sm mt-2" }, game.name)
+              React.createElement("div", { className: "text-3xl" }, g.icon),
+              React.createElement("div", { className: "text-sm mt-2" }, g.name)
             )
           )
         ),
@@ -120,10 +127,10 @@
         selectedGame &&
           React.createElement(
             "div",
-            { className: "mb-6 text-center" },
+            { className: "mb-4 text-center" },
             React.createElement(
               "h2",
-              { className: "text-xl font-semibold mb-2" },
+              { className: "text-xl mb-2" },
               `🎮 ${selectedGame.name}`
             ),
             React.createElement(
@@ -137,31 +144,46 @@
             )
           ),
 
-        loading
-          ? React.createElement(
-              "p",
-              { className: "text-center text-yellow-400" },
-              "Carregando..."
-            )
-          : apiResponse
-          ? React.createElement(
-              "pre",
-              {
-                className:
-                  "bg-slate-800 p-4 rounded-xl text-xs overflow-auto max-h-[400px]",
-              },
-              JSON.stringify(apiResponse, null, 2)
-            )
-          : React.createElement(
-              "p",
-              { className: "text-center text-slate-400" },
-              "Selecione um jogo para começar."
-            )
+        loading &&
+          React.createElement(
+            "div",
+            { className: "text-yellow-400 text-center mb-3" },
+            "⏳ Carregando..."
+          ),
+
+        React.createElement(
+          "div",
+          {
+            className:
+              "bg-slate-800 rounded-lg p-4 max-h-[400px] overflow-auto text-xs",
+          },
+          logs.length === 0
+            ? "Nenhuma requisição ainda."
+            : logs.map((l, i) =>
+                React.createElement(
+                  "div",
+                  { key: i, className: "mb-3 border-b border-slate-700 pb-2" },
+                  React.createElement(
+                    "div",
+                    { className: "text-slate-400" },
+                    `[${l.time}] ${l.msg}`
+                  ),
+                  l.data &&
+                    React.createElement(
+                      "pre",
+                      { className: "text-slate-200 mt-1" },
+                      typeof l.data === "string"
+                        ? l.data
+                        : JSON.stringify(l.data, null, 2)
+                    )
+                )
+              )
+        )
       );
     }
 
     ReactDOM.createRoot(document.getElementById("root")).render(
-      React.createElement(PGSoftAPIFrontend)
+      React.createElement(PGSoftDashboard)
     );
   </script>
 </body>
