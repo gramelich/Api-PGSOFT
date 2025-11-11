@@ -1,7 +1,8 @@
+// script.js (Lógica de comunicação com a API)
+
 // VARIÁVEL DE CONFIGURAÇÃO CRÍTICA
-// *** ALTERE ESTE VALOR COM O ENDEREÇO DA SUA API NA VPS ***
-// Exemplo: 'http://SEU_DOMINIO.com:3000/api/usuario' 
-const API_BASE_URL = 'http://localhost:3000/api/usuario'; 
+// *** ENDEREÇO CORRETO DA SUA API NA VPS ***
+const API_BASE_URL = 'https://pg-api-pg.rkfmzx.easypanel.host/api/usuario'; 
 
 // Exibe a URL na tela para confirmação
 document.getElementById('api-url-display').textContent = API_BASE_URL;
@@ -14,7 +15,6 @@ const mensagemPost = document.getElementById('mensagem-post');
 // FUNÇÃO 1: CARREGAR/VISUALIZAR UTILIZADORES (GET)
 // ----------------------------------------------------
 async function carregarUtilizadores() {
-    // Número de colunas na tabela (ID, Username, Token, Saldo, RTP, Influencer?, Agente ID)
     const COLUMNS = 7; 
     
     tabelaCorpo.innerHTML = `<tr><td colspan="${COLUMNS}">A carregar dados...</td></tr>`;
@@ -65,14 +65,16 @@ formNovoUtilizador.addEventListener('submit', async function(event) {
     mensagemPost.textContent = 'A enviar dados...';
     mensagemPost.style.backgroundColor = '#ffc107'; 
 
-    // Coleta todos os dados do formulário, incluindo os campos hidden
     const formData = new FormData(formNovoUtilizador);
     const novoUtilizador = {};
     formData.forEach((value, key) => novoUtilizador[key] = key === 'agentid' ? parseInt(value) : value);
     
-    // Converte Saldo, RTP, etc., para números (assumindo que sua API espera números)
     novoUtilizador.saldo = parseFloat(novoUtilizador.saldo);
-    // ... e assim por diante para todos os campos numéricos.
+    novoUtilizador.valorapostado = parseFloat(novoUtilizador.valorapostado);
+    novoUtilizador.valordebitado = parseFloat(novoUtilizador.valordebitado);
+    novoUtilizador.valorganho = parseFloat(novoUtilizador.valorganho);
+    novoUtilizador.rtp = parseFloat(novoUtilizador.rtp);
+    novoUtilizador.isinfluencer = parseInt(novoUtilizador.isinfluencer);
 
     try {
         const response = await fetch(API_BASE_URL, {
@@ -89,8 +91,6 @@ formNovoUtilizador.addEventListener('submit', async function(event) {
             mensagemPost.textContent = `✅ Sucesso! Utilizador adicionado. ID: ${resultado.id || 'N/A'}`;
             mensagemPost.style.backgroundColor = '#d4edda'; 
             formNovoUtilizador.reset(); 
-            // Os campos hidden precisam ser redefinidos manualmente se for o caso, 
-            // mas como têm valores estáticos, não é estritamente necessário.
             carregarUtilizadores(); // Atualiza a lista
         } else {
             throw new Error(`Erro ao adicionar. Resposta da API: ${resultado.message || response.statusText}`);
