@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle da API PGSOFT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🎮 Painel de Controle da API PGSOFT</h1>
+    </header>
+
+    <main>
+        <section id="visualizacao">
+            <h2>👥 Lista de Utilizadores</h2>
+            <p>Utilizadores listados a partir do endpoint: <span id="api-url-display">A carregar...</span></p>
+            <button onclick="carregarUtilizadores()">Atualizar Lista</button>
+            <table id="tabela-utilizadores">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Token</th>
+                        <th>Saldo</th>
+                        <th>RTP</th>
+                        <th>Influencer?</th>
+                        <th>Agente ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        <hr>
+
+        <section id="adicao">
+            <h2>➕ Adicionar Novo Utilizador</h2>
+            <form id="form-novo-utilizador">
+                <div>
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div>
+                    <label for="token">Token:</label>
+                    <input type="text" id="token" name="token" required>
+                </div>
+                <div>
+                    <label for="atk">ATK:</label>
+                    <input type="text" id="atk" name="atk" required>
+                </div>
+                <div>
+                    <label for="agentid">Agent ID:</label>
+                    <input type="number" id="agentid" name="agentid" value="1" required>
+                </div>
+                <input type="hidden" name="saldo" value="0.00">
+                <input type="hidden" name="valorapostado" value="0.00">
+                <input type="hidden" name="valordebitado" value="0.00">
+                <input type="hidden" name="valorganho" value="0.00">
+                <input type="hidden" name="rtp" value="0.00">
+                <input type="hidden" name="isinfluencer" value="0">
+                
+                <button type="submit">Enviar para API</button>
+            </form>
+            <p id="mensagem-post" class="mensagem"></p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
