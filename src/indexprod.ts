@@ -20,21 +20,19 @@ import "dotenv/config"
 //   key: privateKey,
 //   cert: certificate,
 // }
+
 const app = express()
 const httpServer = http.createServer(app)
 const io = new Server(httpServer)
 
 console.log(figlet.textSync("API DE JOGOS JOHN"), "\n")
 
-// httpServer.listen(process.env.PORT, () => {
-//   logger.info("SERVIDOR INICIADO JOHN " + process.env.PORT)
-
-// })
 declare module "express-serve-static-core" {
    interface Request {
       io: Server
    }
 }
+
 const users = new Map<string, any>()
 
 io.on("connection", async (socket: Socket) => {
@@ -111,7 +109,6 @@ io.on("connection", async (socket: Socket) => {
 
    socket.on("disconnect", (reason) => {
       users.delete(socket.id)
-
       console.log("Cliente desconectado:", reason)
    })
 })
@@ -125,19 +122,27 @@ app.use((req: Request, res: Response, next) => {
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use("/", express.static(path.join(__dirname, "public")))
+
+// ✅ Servir os arquivos estáticos corretamente da pasta public (fora da dist)
+app.use("/", express.static(path.join(__dirname, "../public")))
+
+// ✅ Rota padrão para o index.html
+app.get("/", (req, res) => {
+   res.sendFile(path.join(__dirname, "../public/index.html"))
+})
+
 app.use(
    helmet.contentSecurityPolicy({
       useDefaults: false,
       directives: {
          "default-src": ["'none'"],
-         "base-uri": "'self'",
+         "base-uri": "'self'"],
          "font-src": ["'self'", "https:", "data:"],
          "frame-ancestors": ["'self'"],
          "img-src": ["'self'", "data:"],
          "object-src": ["'none'"],
          "script-src": ["'self'", "https://cdnjs.cloudflare.com"],
-         "script-src-attr": "'none'",
+         "script-src-attr": "'none'"],
          "style-src": ["'self'", "https://cdnjs.cloudflare.com"],
       },
    }),
@@ -146,7 +151,9 @@ app.use(
 app.use("/status", (req, res) => {
    res.json({ status: "operational" })
 })
+
 app.use(routes)
+
 httpServer.listen(process.env.PORT, () => {
    logger.info("SERVIDOR INICIADO API JOHN " + process.env.PORT)
 })
