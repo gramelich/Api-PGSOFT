@@ -2,7 +2,7 @@
   "name": "api-pgsoft",
   "version": "1.0.0",
   "description": "API PGSoft - Slots com RTP e GGR",
-  "main": "dist/index.js",
+  "main": "dist/indexprod.js",
   "license": "MIT",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
