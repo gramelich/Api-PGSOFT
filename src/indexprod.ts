@@ -129,7 +129,7 @@ app.use("/status", (req, res) => {
 app.use(routes);
 
 // --- Iniciar servidor ---
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   logger.info(`SERVIDOR INICIADO NA PORTA ${PORT}`);
   console.log(`Servindo arquivos de: ${publicPath}`);
