@@ -23,7 +23,7 @@ export default {
       return res[0]
    },
    async attagent(id: number, probganho: string, probbonus: string, probganhortp: string, probganhoinfluencer: string, probbonusinfluencer: string, probganhoaposta: string, probganhosaldo: string) {
-      const res = await promisePool.query<ResultSetHeader>("UPDATE agents SET probganho = ?,probbonus = ?,probganhortp = ?,probganhoinfluencer = ?,probbonusinfluencer = ?,probganhoaposta = ?,probganhosaldo = ? WHERE id=", [probganho, probbonus, probganhortp, probganhoinfluencer, probbonusinfluencer, probganhoaposta, probganhosaldo, id])
+      const res = await promisePool.query<ResultSetHeader>("UPDATE agents SET probganho = ?,probbonus = ?,probganhortp = ?,probganhoinfluencer = ?,probbonusinfluencer = ?,probganhoaposta = ?,probganhosaldo = ? WHERE id=?", [probganho, probbonus, probganhortp, probganhoinfluencer, probbonusinfluencer, probganhoaposta, probganhosaldo, id])
       return res[0]
    },
    async createagent(

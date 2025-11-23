@@ -208,6 +208,8 @@ export default {
       }
    },
    async createagent(req: Request, res: Response) {
+      console.log("➡️ [DEBUG] createagent called with body:", req.body);
+
       const agentCode = req.body.agentCode || req.body.agent_code || 'localagent'
       const agentToken = req.body.agentToken || req.body.agent_token
       const secretKey = req.body.secretKey || req.body.secret_key
@@ -225,17 +227,25 @@ export default {
       try {
          const at = agentToken || v4()
          const sk = secretKey || v4()
+
+         console.log("➡️ [DEBUG] Inserting into DB:", { agentCode, at, sk, saldo, probganho });
+
          const created = await apifunctions.createagent(
             agentCode, at, sk, saldo,
             probganho, probbonus, probganhortp, probganhoinfluencer,
             probbonusinfluencer, probganhoaposta, probganhosaldo, callbackurl
          )
+
+         console.log("✅ [DEBUG] DB Response:", created);
+
          if (created && (created as any).affectedRows > 0) {
             res.send({ status: 'success', agentToken: at, secretKey: sk })
          } else {
+            console.error("❌ [DEBUG] Failed to insert agent, affectedRows is 0 or null");
             res.send({ status: 'error', message: 'Erro ao criar agent' })
          }
       } catch (error) {
+         console.error("❌ [DEBUG] Exception in createagent:", error);
          logger.error(error)
          res.status(500).send({ status: 'error', message: 'Erro interno' })
       }
