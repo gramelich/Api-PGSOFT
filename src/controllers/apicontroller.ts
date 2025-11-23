@@ -207,4 +207,24 @@ export default {
          })
       }
    },
+   async createagent(req: Request, res: Response) {
+      const agentCode = req.body.agentCode || req.body.agent_code || 'localagent'
+      const agentToken = req.body.agentToken || req.body.agent_token
+      const secretKey = req.body.secretKey || req.body.secret_key
+      const saldo = parseFloat(req.body.saldo || req.body.balance || 0)
+
+      try {
+         const at = agentToken || v4()
+         const sk = secretKey || v4()
+         const created = await apifunctions.createagent(agentCode, at, sk, saldo)
+         if (created && (created as any).affectedRows > 0) {
+            res.send({ status: 'success', agentToken: at, secretKey: sk })
+         } else {
+            res.send({ status: 'error', message: 'Erro ao criar agent' })
+         }
+      } catch (error) {
+         logger.error(error)
+         res.status(500).send({ status: 'error', message: 'Erro interno' })
+      }
+   },
 }

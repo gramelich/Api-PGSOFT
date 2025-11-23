@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  api-pgsoft:
+    build: .
+    container_name: api-pgsoft
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USERNAME=pgsoft
+      - DB_PASSWORD=minhasenhapg
+      - DB_NAME=pgsoft
+      - API_SECRET=169a01c91744946f7cb356577200b789
+      - ALLOWED_ORIGINS=*
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.0
+    container_name: pgsoft_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: pgsoft
+      MYSQL_USER: pgsoft
+      MYSQL_PASSWORD: minhasenhapg
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./apidb.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+
+
+networks:
+  app-network:
+    driver: bridge

@@ -24,6 +24,7 @@ routes.post("/web-api/game-proxy/v2/Resources/GetByResourcesTypeIds", sessioncon
 routes.post("/api/v1/game_launch", apicontroller.launchgame)
 routes.post("/api/v1/getagent", apicontroller.getagent)
 routes.post("/api/v1/attagent", apicontroller.attagent)
+routes.post("/api/v1/createagent", apicontroller.createagent)
 //GAMES CONTROLLERS ROUTES
 routes.post("/web-api/auth/session/v2/verifySession", sessioncontroller.verifySession)
 

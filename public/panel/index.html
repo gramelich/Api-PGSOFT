@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel - PGSoft API</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script>
+    const API_BASE = window.location.origin;
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>PGSoft API - Painel Simples</h1>
+
+    <section class="card">
+      <h2>Create Agent</h2>
+      <form id="formCreateAgent">
+        <label>Agent Code <input name="agentCode" value="localagent" /></label>
+        <label>Saldo <input name="saldo" value="1000" /></label>
+        <label>Agent Token (opcional) <input name="agentToken" /></label>
+        <label>Secret Key (opcional) <input name="secretKey" /></label>
+        <button type="submit">Create Agent</button>
+      </form>
+      <pre id="createAgentResult"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Game Launch (create user)</h2>
+      <form id="formLaunch">
+        <label>Agent Token <input name="agentToken" /></label>
+        <label>Secret Key <input name="secretKey" /></label>
+        <label>User Code <input name="user_code" value="usuario1" /></label>
+        <label>Game Code <input name="game_code" value="fortune-tiger" /></label>
+        <label>User Balance <input name="user_balance" value="100" /></label>
+        <button type="submit">Launch Game / Create User</button>
+      </form>
+      <pre id="launchResult"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Game Info / Spin</h2>
+      <label>Game Code <input id="gameCode" value="fortune-tiger" /></label>
+      <button id="btnInfo">Get GameInfo</button>
+      <button id="btnSpin">Spin</button>
+      <pre id="gameResult"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Raw Request</h2>
+      <label>Method <select id="rawMethod"><option>POST</option><option>GET</option></select></label>
+      <label>Path <input id="rawPath" value="/api/v1/game_launch" /></label>
+      <label>Body <textarea id="rawBody">{"agentToken":"","secretKey":"","user_code":"usuario1","game_code":"fortune-tiger","user_balance":100}</textarea></label>
+      <button id="btnRaw">Send</button>
+      <pre id="rawResult"></pre>
+    </section>
+
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
