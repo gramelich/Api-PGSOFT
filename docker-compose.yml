@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api-pgsoft:
     build: .
@@ -8,7 +6,8 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -36,6 +35,12 @@ services:
       - ./apidb.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
 
 volumes:
   db_data:
