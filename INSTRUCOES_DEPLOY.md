@@ -71,7 +71,7 @@ docker compose logs -f api-pgsoft
 ## Notas Importantes
 
 -   **Banco de Dados**: O arquivo `apidb.sql` será importado automaticamente na primeira vez que o banco de dados for iniciado. Se você precisar resetar o banco, terá que apagar o volume `db_data`: `docker compose down -v`.
--   **Portas**: A API estará rodando na porta `3000`. Certifique-se de que o firewall da VPS permite tráfego nessa porta.
+-   **Portas**: A API estará rodando na porta `3001`. Certifique-se de que o firewall da VPS permite tráfego nessa porta.
 -   **Variáveis de Ambiente**: Para maior segurança em produção, edite o arquivo `docker-compose.yml` e altere as senhas padrão (`minhasenhapg`, `rootpassword`, etc.).
 
 ---
