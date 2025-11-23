@@ -1,61 +1,305 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel - PGSoft API</title>
-  <link rel="stylesheet" href="./style.css" />
-  <script>
-    const API_BASE = window.location.origin;
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PGSoft Admin Panel</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .glass {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>PGSoft API - Painel Simples</h1>
+  <div id="root" class="min-h-screen flex"></div>
+  <script type="text/javascript">
+    const { useState, useEffect } = React;
+    const API_BASE_URL = window.location.origin;
+    const e = React.createElement;
 
-    <section class="card">
-      <h2>Create Agent</h2>
-      <form id="formCreateAgent">
-        <label>Agent Code <input name="agentCode" value="localagent" /></label>
-        <label>Saldo <input name="saldo" value="1000" /></label>
-        <label>Agent Token (opcional) <input name="agentToken" /></label>
-        <label>Secret Key (opcional) <input name="secretKey" /></label>
-        <button type="submit">Create Agent</button>
-      </form>
-      <pre id="createAgentResult"></pre>
-    </section>
+    const Sidebar = function ({ activeTab, setActiveTab }) {
+      const menuItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+        { id: 'agents', label: 'Agentes', icon: 'users' },
+        { id: 'users', label: 'Usuários', icon: 'user' },
+        { id: 'games', label: 'Jogos', icon: 'gamepad-2' }
+      ];
 
-    <section class="card">
-      <h2>Game Launch (create user)</h2>
-      <form id="formLaunch">
-        <label>Agent Token <input name="agentToken" /></label>
-        <label>Secret Key <input name="secretKey" /></label>
-        <label>User Code <input name="user_code" value="usuario1" /></label>
-        <label>Game Code <input name="game_code" value="fortune-tiger" /></label>
-        <label>User Balance <input name="user_balance" value="100" /></label>
-        <button type="submit">Launch Game / Create User</button>
-      </form>
-      <pre id="launchResult"></pre>
-    </section>
+      return e("div", { className: "w-64 bg-slate-900 border-r border-slate-800 flex flex-col" },
+        e("div", { className: "p-6 border-b border-slate-800" },
+          e("h1", { className: "text-2xl font-bold text-blue-500" }, "PGSoft Panel")
+        ),
+        e("nav", { className: "flex-1 p-4 space-y-2" },
+          menuItems.map(function (item) {
+            return e("button", {
+              key: item.id,
+              onClick: function () { setActiveTab(item.id); },
+              className: "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition " + (activeTab === item.id ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800')
+            },
+              e("i", { "data-lucide": item.icon }),
+              item.label
+            );
+          })
+        ),
+        e("div", { className: "p-4 border-t border-slate-800 text-xs text-slate-500 text-center" }, "v1.0.0")
+      );
+    };
 
-    <section class="card">
-      <h2>Game Info / Spin</h2>
-      <label>Game Code <input id="gameCode" value="fortune-tiger" /></label>
-      <button id="btnInfo">Get GameInfo</button>
-      <button id="btnSpin">Spin</button>
-      <pre id="gameResult"></pre>
-    </section>
+    const Dashboard = function () {
+      return e("div", { className: "p-8" },
+        e("h2", { className: "text-3xl font-bold mb-6" }, "Visão Geral"),
+        e("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-6" },
+          e("div", { className: "glass p-6 rounded-xl" },
+            e("h3", { className: "text-slate-400 mb-2" }, "Status do Sistema"),
+            e("div", { className: "text-2xl font-bold text-green-400" }, "Operacional")
+          ),
+          e("div", { className: "glass p-6 rounded-xl" },
+            e("h3", { className: "text-slate-400 mb-2" }, "API Endpoint"),
+            e("div", { className: "text-sm font-mono text-blue-300 break-all" }, API_BASE_URL)
+          )
+        )
+      );
+    };
 
-    <section class="card">
-      <h2>Raw Request</h2>
-      <label>Method <select id="rawMethod"><option>POST</option><option>GET</option></select></label>
-      <label>Path <input id="rawPath" value="/api/v1/game_launch" /></label>
-      <label>Body <textarea id="rawBody">{"agentToken":"","secretKey":"","user_code":"usuario1","game_code":"fortune-tiger","user_balance":100}</textarea></label>
-      <button id="btnRaw">Send</button>
-      <pre id="rawResult"></pre>
-    </section>
+    const Modal = function ({ isOpen, onClose, title, children }) {
+      if (!isOpen) return null;
+      return e("div", { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" },
+        e("div", { className: "bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" },
+          e("div", { className: "flex justify-between items-center p-6 border-b border-slate-800" },
+            e("h3", { className: "text-xl font-bold" }, title),
+            e("button", { onClick: onClose, className: "text-slate-400 hover:text-white" }, "✕")
+          ),
+          e("div", { className: "p-6" }, children)
+        )
+      );
+    };
 
-  </div>
-  <script src="./app.js"></script>
+    const AgentsList = function () {
+      const [agents, setAgents] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [formData, setFormData] = useState({
+        agent_code: '', saldo: 0, probganho: '50', callbackurl: ''
+      });
+
+      useEffect(function () {
+        fetch(API_BASE_URL + '/api/v1/agents')
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.status === 'success') setAgents(data.data);
+            setLoading(false);
+          })
+          .catch(function () { setLoading(false); });
+      }, []);
+
+      const handleInputChange = function (ev) {
+        const name = ev.target.name;
+        const value = ev.target.value;
+        setFormData(function (prev) {
+          const newData = {};
+          for (var key in prev) newData[key] = prev[key];
+          newData[name] = value;
+          return newData;
+        });
+      };
+
+      const handleSubmit = function (ev) {
+        ev.preventDefault();
+        fetch(API_BASE_URL + '/api/v1/createagent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (result) {
+            if (result.status === 'success') {
+              alert('Agente criado!\nToken: ' + result.agentToken + '\nSecret: ' + result.secretKey);
+              setIsModalOpen(false);
+              window.location.reload();
+            } else {
+              alert('Erro: ' + result.message);
+            }
+          })
+          .catch(function (err) {
+            console.error(err);
+            alert('Erro de conexão');
+          });
+      };
+
+      return e("div", { className: "p-8" },
+        e("div", { className: "flex justify-between items-center mb-6" },
+          e("h2", { className: "text-3xl font-bold" }, "Gerenciar Agentes"),
+          e("button", {
+            onClick: function () { setIsModalOpen(true); },
+            className: "bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold text-white"
+          }, "+ Novo Agente")
+        ),
+        loading ? e("p", null, "Carregando...") :
+          e("div", { className: "glass rounded-xl overflow-hidden" },
+            e("table", { className: "w-full text-left" },
+              e("thead", { className: "bg-slate-800 text-slate-400" },
+                e("tr", null,
+                  e("th", { className: "p-4" }, "ID"),
+                  e("th", { className: "p-4" }, "Code"),
+                  e("th", { className: "p-4" }, "Saldo"),
+                  e("th", { className: "p-4" }, "Prob. Ganho")
+                )
+              ),
+              e("tbody", null,
+                agents.map(function (agent) {
+                  return e("tr", { key: agent.id, className: "border-b border-slate-800 hover:bg-slate-800/50" },
+                    e("td", { className: "p-4" }, agent.id),
+                    e("td", { className: "p-4 font-bold" }, agent.agentCode),
+                    e("td", { className: "p-4 text-green-400" }, "R$ " + agent.saldo),
+                    e("td", { className: "p-4" }, agent.probganho + "%")
+                  );
+                })
+              )
+            )
+          ),
+        e(Modal, { isOpen: isModalOpen, onClose: function () { setIsModalOpen(false); }, title: "Adicionar Novo Agente" },
+          e("form", { onSubmit: handleSubmit, className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
+            e("input", { name: "agent_code", placeholder: "Agent Code", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange, required: true }),
+            e("input", { name: "saldo", type: "number", placeholder: "Saldo", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange, required: true }),
+            e("input", { name: "probganho", placeholder: "Prob. Ganho", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            e("input", { name: "callbackurl", placeholder: "Callback URL", className: "col-span-2 bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            e("button", { type: "submit", className: "col-span-2 bg-green-600 hover:bg-green-700 p-3 rounded font-bold mt-4 text-white" }, "Salvar")
+          )
+        )
+      );
+    };
+
+    const UsersList = function () {
+      const [users, setUsers] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(function () {
+        fetch(API_BASE_URL + '/api/v1/users')
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.status === 'success') setUsers(data.data);
+            setLoading(false);
+          })
+          .catch(function () { setLoading(false); });
+      }, []);
+
+      return e("div", { className: "p-8" },
+        e("h2", { className: "text-3xl font-bold mb-6" }, "Usuários"),
+        loading ? e("p", null, "Carregando...") :
+          e("div", { className: "glass rounded-xl overflow-hidden" },
+            e("table", { className: "w-full text-left" },
+              e("thead", { className: "bg-slate-800 text-slate-400" },
+                e("tr", null,
+                  e("th", { className: "p-4" }, "ID"),
+                  e("th", { className: "p-4" }, "Username"),
+                  e("th", { className: "p-4" }, "Saldo")
+                )
+              ),
+              e("tbody", null,
+                users.map(function (user) {
+                  return e("tr", { key: user.id, className: "border-b border-slate-800" },
+                    e("td", { className: "p-4" }, user.id),
+                    e("td", { className: "p-4" }, user.username),
+                    e("td", { className: "p-4 text-green-400" }, "R$ " + user.saldo)
+                  );
+                })
+              )
+            )
+          )
+      );
+    };
+
+    const GamesLauncher = function () {
+      const [games] = useState([
+        { id: "fortune-tiger", name: "Fortune Tiger", icon: "🐯" },
+        { id: "fortune-rabbit", name: "Fortune Rabbit", icon: "🐰" }
+      ]);
+      const [agentToken, setAgentToken] = useState("");
+      const [secretKey, setSecretKey] = useState("");
+      const [userCode, setUserCode] = useState("player_01");
+      const [launchUrl, setLaunchUrl] = useState("");
+
+      const launch = function (gameId) {
+        if (!agentToken || !secretKey) return alert("Preencha Token e Secret!");
+        fetch(API_BASE_URL + '/api/v1/game_launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agentToken: agentToken, secretKey: secretKey, user_code: userCode, game_code: gameId,
+            user_balance: 1000, game_type: 'slot', provider_code: 'PGSOFT'
+          })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (res) {
+            if (res.status === 1) {
+              setLaunchUrl(res.launch_url);
+            } else {
+              alert("Erro: " + res.message);
+            }
+          });
+      };
+
+      return e("div", { className: "p-8" },
+        e("h2", { className: "text-3xl font-bold mb-6" }, "Lançador de Jogos"),
+        e("div", { className: "glass p-6 rounded-xl mb-8" },
+          e("div", { className: "grid grid-cols-3 gap-4" },
+            e("input", { className: "bg-slate-900 border border-slate-700 p-3 rounded text-white", placeholder: "Agent Token", value: agentToken, onChange: function (ev) { setAgentToken(ev.target.value); } }),
+            e("input", { className: "bg-slate-900 border border-slate-700 p-3 rounded text-white", placeholder: "Secret Key", value: secretKey, onChange: function (ev) { setSecretKey(ev.target.value); } }),
+            e("input", { className: "bg-slate-900 border border-slate-700 p-3 rounded text-white", placeholder: "User Code", value: userCode, onChange: function (ev) { setUserCode(ev.target.value); } })
+          )
+        ),
+        launchUrl ? e("div", { className: "bg-green-900/30 border border-green-500 p-4 rounded-lg mb-6 text-center" },
+          e("a", { href: launchUrl, target: "_blank", className: "inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-bold" }, "▶️ JOGAR")
+        ) : null,
+        e("div", { className: "grid grid-cols-4 gap-4" },
+          games.map(function (g) {
+            return e("button", {
+              key: g.id,
+              onClick: function () { launch(g.id); },
+              className: "glass p-4 rounded-xl hover:bg-slate-700 transition flex flex-col items-center gap-2"
+            },
+              e("span", { className: "text-4xl" }, g.icon),
+              e("span", { className: "font-bold" }, g.name)
+            );
+          })
+        )
+      );
+    };
+
+    const App = function () {
+      const [activeTab, setActiveTab] = useState('dashboard');
+
+      useEffect(function () {
+        lucide.createIcons();
+      }, [activeTab]);
+
+      return e("div", { className: "flex w-full min-h-screen" },
+        e(Sidebar, { activeTab: activeTab, setActiveTab: setActiveTab }),
+        e("main", { className: "flex-1 bg-slate-950 overflow-auto" },
+          activeTab === 'dashboard' ? e(Dashboard) : null,
+          activeTab === 'agents' ? e(AgentsList) : null,
+          activeTab === 'users' ? e(UsersList) : null,
+          activeTab === 'games' ? e(GamesLauncher) : null
+        )
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(e(App));
+  </script>
 </body>
+
 </html>
