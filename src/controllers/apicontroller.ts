@@ -227,4 +227,22 @@ export default {
          res.status(500).send({ status: 'error', message: 'Erro interno' })
       }
    },
+   async listAgents(req: Request, res: Response) {
+      try {
+         const agents = await apifunctions.getAllAgents();
+         res.send({ status: 'success', data: agents });
+      } catch (error) {
+         logger.error(error);
+         res.status(500).send({ status: 'error', message: 'Erro ao listar agents' });
+      }
+   },
+   async listUsers(req: Request, res: Response) {
+      try {
+         const users = await apifunctions.getAllUsers();
+         res.send({ status: 'success', data: users });
+      } catch (error) {
+         logger.error(error);
+         res.status(500).send({ status: 'error', message: 'Erro ao listar usuarios' });
+      }
+   },
 }

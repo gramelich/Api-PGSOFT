@@ -32,4 +32,12 @@ export default {
       const res = await promisePool.query<ResultSetHeader>(sql, [agentCode, saldo, agentToken, secretKey]);
       return res[0];
    },
+   async getAllAgents() {
+      const res = await promisePool.query<RowDataPacket[]>("SELECT * FROM agents");
+      return res[0];
+   },
+   async getAllUsers() {
+      const res = await promisePool.query<RowDataPacket[]>("SELECT * FROM users");
+      return res[0];
+   },
 }

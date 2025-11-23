@@ -25,6 +25,8 @@ routes.post("/api/v1/game_launch", apicontroller.launchgame)
 routes.post("/api/v1/getagent", apicontroller.getagent)
 routes.post("/api/v1/attagent", apicontroller.attagent)
 routes.post("/api/v1/createagent", apicontroller.createagent)
+routes.get("/api/v1/agents", apicontroller.listAgents)
+routes.get("/api/v1/users", apicontroller.listUsers)
 //GAMES CONTROLLERS ROUTES
 routes.post("/web-api/auth/session/v2/verifySession", sessioncontroller.verifySession)
 
