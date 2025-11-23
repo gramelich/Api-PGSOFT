@@ -40,12 +40,11 @@ export default {
       probganhosaldo: string,
       callbackurl: string
    ) {
-      // agents.id in the schema may not be AUTO_INCREMENT; insert using MAX(id)+1 to be safe
       const sql = `INSERT INTO agents (
-         id, agentCode, saldo, agentToken, secretKey, 
+         agentCode, saldo, agentToken, secretKey, 
          probganho, probbonus, probganhortp, probganhoinfluencer, 
          probbonusinfluencer, probganhoaposta, probganhosaldo, callbackurl
-      ) SELECT IFNULL(MAX(id),0)+1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM agents`;
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
       const res = await promisePool.query<ResultSetHeader>(sql, [
          agentCode, saldo, agentToken, secretKey,
