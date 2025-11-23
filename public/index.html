@@ -36,8 +36,6 @@
     const { useState, useEffect } = React;
     const API_BASE_URL = window.location.origin;
 
-    // --- Components ---
-
     const Sidebar = ({ activeTab, setActiveTab }) => {
       const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
@@ -55,8 +53,7 @@
             React.createElement("button", {
               key: item.id,
               onClick: () => setActiveTab(item.id),
-              className: `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === item.id ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'
-                }`
+              className: `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${activeTab === item.id ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`
             },
               React.createElement("i", { "data-lucide": item.icon }),
               item.label
@@ -92,18 +89,119 @@
           React.createElement("div", { className: "flex justify-between items-center p-6 border-b border-slate-800" },
             React.createElement("h3", { className: "text-xl font-bold" }, title),
             React.createElement("button", { onClick: onClose, className: "text-slate-400 hover:text-white" }, "✕")
+          ),
+          React.createElement("div", { className: "p-6" }, children)
+        )
+      );
+    };
+
+    const AgentsList = () => {
+      const [agents, setAgents] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [formData, setFormData] = useState({
+        agent_code: '', saldo: 0, agent_token: '', secret_key: '',
+        probganho: '50', probbonus: '10', probganhortp: '95',
+        probganhoinfluencer: '60', probbonusinfluencer: '20',
+        probganhoaposta: '40', probganhosaldo: '30', callbackurl: ''
+      });
+
       useEffect(() => {
-              fetch(`${API_BASE_URL}/api/v1/users`)
-                .then(res => res.json())
-                .then(data => {
-                  if (data.status === 'success') setUsers(data.data);
-                  setLoading(false);
-                })
-                .catch(err => setLoading(false));
-            }, []);
+        fetch(`${API_BASE_URL}/api/v1/agents`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success') setAgents(data.data);
+            setLoading(false);
+          })
+          .catch(err => setLoading(false));
+      }, []);
+
+      const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/v1/createagent`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+          const result = await response.json();
+          if (result.status === 'success') {
+            alert(`Agente criado!\nToken: ${result.agentToken}\nSecret: ${result.secretKey}`);
+            setIsModalOpen(false);
+            window.location.reload();
+          } else {
+            alert("Erro ao criar agente: " + result.message);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Erro de conexão.");
+        }
+      };
 
       return React.createElement("div", { className: "p-8" },
-        React.createElement("h2", { className: "text-3xl font-bold mb-6" }, "Usuários Cadastrados"),
+        React.createElement("div", { className: "flex justify-between items-center mb-6" },
+          React.createElement("h2", { className: "text-3xl font-bold" }, "Gerenciar Agentes"),
+          React.createElement("button", {
+            onClick: () => setIsModalOpen(true),
+            className: "bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold text-white"
+          }, "+ Novo Agente")
+        ),
+        loading ? React.createElement("p", null, "Carregando...") :
+          React.createElement("div", { className: "glass rounded-xl overflow-hidden" },
+            React.createElement("table", { className: "w-full text-left" },
+              React.createElement("thead", { className: "bg-slate-800 text-slate-400" },
+                React.createElement("tr", null,
+                  React.createElement("th", { className: "p-4" }, "ID"),
+                  React.createElement("th", { className: "p-4" }, "Code"),
+                  React.createElement("th", { className: "p-4" }, "Saldo"),
+                  React.createElement("th", { className: "p-4" }, "Prob. Ganho")
+                )
+              ),
+              React.createElement("tbody", null,
+                agents.map(agent =>
+                  React.createElement("tr", { key: agent.id, className: "border-b border-slate-800 hover:bg-slate-800/50" },
+                    React.createElement("td", { className: "p-4" }, agent.id),
+                    React.createElement("td", { className: "p-4 font-bold" }, agent.agentCode),
+                    React.createElement("td", { className: "p-4 text-green-400" }, `R$ ${agent.saldo}`),
+                    React.createElement("td", { className: "p-4" }, `${agent.probganho}%`)
+                  )
+                )
+              )
+            )
+          ),
+        React.createElement(Modal, { isOpen: isModalOpen, onClose: () => setIsModalOpen(false), title: "Adicionar Novo Agente" },
+          React.createElement("form", { onSubmit: handleSubmit, className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
+            React.createElement("input", { name: "agent_code", placeholder: "Agent Code", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange, required: true }),
+            React.createElement("input", { name: "saldo", type: "number", placeholder: "Saldo", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange, required: true }),
+            React.createElement("input", { name: "probganho", placeholder: "Prob. Ganho", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "callbackurl", placeholder: "Callback URL", className: "col-span-2 bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("button", { type: "submit", className: "col-span-2 bg-green-600 hover:bg-green-700 p-3 rounded font-bold mt-4 text-white" }, "Salvar")
+          )
+        )
+      );
+    };
+
+    const UsersList = () => {
+      const [users, setUsers] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        fetch(`${API_BASE_URL}/api/v1/users`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success') setUsers(data.data);
+            setLoading(false);
+          })
+          .catch(err => setLoading(false));
+      }, []);
+
+      return React.createElement("div", { className: "p-8" },
+        React.createElement("h2", { className: "text-3xl font-bold mb-6" }, "Usuários"),
         loading ? React.createElement("p", null, "Carregando...") :
           React.createElement("div", { className: "glass rounded-xl overflow-hidden" },
             React.createElement("table", { className: "w-full text-left" },
@@ -111,19 +209,15 @@
                 React.createElement("tr", null,
                   React.createElement("th", { className: "p-4" }, "ID"),
                   React.createElement("th", { className: "p-4" }, "Username"),
-                  React.createElement("th", { className: "p-4" }, "Token"),
-                  React.createElement("th", { className: "p-4" }, "Saldo"),
-                  React.createElement("th", { className: "p-4" }, "RTP")
+                  React.createElement("th", { className: "p-4" }, "Saldo")
                 )
               ),
               React.createElement("tbody", null,
                 users.map(user =>
-                  React.createElement("tr", { key: user.id, className: "border-b border-slate-800 hover:bg-slate-800/50" },
+                  React.createElement("tr", { key: user.id, className: "border-b border-slate-800" },
                     React.createElement("td", { className: "p-4" }, user.id),
-                    React.createElement("td", { className: "p-4 font-bold" }, user.username),
-                    React.createElement("td", { className: "p-4 font-mono text-xs text-slate-400" }, user.token),
-                    React.createElement("td", { className: "p-4 text-green-400" }, `R$ ${user.saldo}`),
-                    React.createElement("td", { className: "p-4" }, `${user.rtp}%`)
+                    React.createElement("td", { className: "p-4" }, user.username),
+                    React.createElement("td", { className: "p-4 text-green-400" }, `R$ ${user.saldo}`)
                   )
                 )
               )
@@ -135,28 +229,21 @@
     const GamesLauncher = () => {
       const [games] = useState([
         { id: "fortune-tiger", name: "Fortune Tiger", icon: "🐯" },
-        { id: "fortune-rabbit", name: "Fortune Rabbit", icon: "🐰" },
-        { id: "fortune-ox", name: "Fortune Ox", icon: "🐂" },
-        { id: "fortune-mouse", name: "Fortune Mouse", icon: "🐭" },
-        { id: "ganesha-gold", name: "Ganesha Gold", icon: "🐘" },
-        { id: "bikine-paradise", name: "Bikini Paradise", icon: "🏖️" },
-        { id: "fortune-dragon", name: "Dragon Hatch", icon: "🐉" },
-        { id: "dragon-tiger-luck", name: "Mahjong Ways 2", icon: "🀄" },
+        { id: "fortune-rabbit", name: "Fortune Rabbit", icon: "🐰" }
       ]);
-
       const [agentToken, setAgentToken] = useState("");
       const [secretKey, setSecretKey] = useState("");
       const [userCode, setUserCode] = useState("player_01");
       const [launchUrl, setLaunchUrl] = useState("");
 
       const launch = async (gameId) => {
-        if (!agentToken || !secretKey) return alert("Preencha o Token e Secret do Agente!");
-
+        if (!agentToken || !secretKey) return alert("Preencha Token e Secret!");
         const res = await fetch(`${API_BASE_URL}/api/v1/game_launch`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            agentToken, secretKey, user_code: userCode, game_code: gameId, user_balance: 1000, game_type: 'slot', provider_code: 'PGSOFT'
+            agentToken, secretKey, user_code: userCode, game_code: gameId,
+            user_balance: 1000, game_type: 'slot', provider_code: 'PGSOFT'
           })
         }).then(r => r.json());
 
@@ -169,39 +256,17 @@
 
       return React.createElement("div", { className: "p-8" },
         React.createElement("h2", { className: "text-3xl font-bold mb-6" }, "Lançador de Jogos"),
-
         React.createElement("div", { className: "glass p-6 rounded-xl mb-8" },
-          React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-3 gap-4" },
-            React.createElement("input", {
-              className: "bg-slate-900 border border-slate-700 p-3 rounded text-white",
-              placeholder: "Agent Token",
-              value: agentToken,
-              onChange: e => setAgentToken(e.target.value)
-            }),
-            React.createElement("input", {
-              className: "bg-slate-900 border border-slate-700 p-3 rounded text-white",
-              placeholder: "Secret Key",
-              value: secretKey,
-              onChange: e => setSecretKey(e.target.value)
-            }),
-            React.createElement("input", {
-              className: "bg-slate-900 border border-slate-700 p-3 rounded text-white",
-              placeholder: "User Code (Player)",
-              value: userCode,
-              onChange: e => setUserCode(e.target.value)
-            })
+          React.createElement("div", { className: "grid grid-cols-3 gap-4" },
+            React.createElement("input", { className: "bg-slate-900 border border-slate-700 p-3 rounded text-white", placeholder: "Agent Token", value: agentToken, onChange: e => setAgentToken(e.target.value) }),
+            React.createElement("input", { className: "bg-slate-900 border border-slate-700 p-3 rounded text-white", placeholder: "Secret Key", value: secretKey, onChange: e => setSecretKey(e.target.value) }),
+            React.createElement("input", { className: "bg-slate-900 border border-slate-700 p-3 rounded text-white", placeholder: "User Code", value: userCode, onChange: e => setUserCode(e.target.value) })
           )
         ),
-
         launchUrl && React.createElement("div", { className: "bg-green-900/30 border border-green-500 p-4 rounded-lg mb-6 text-center" },
-          React.createElement("a", {
-            href: launchUrl,
-            target: "_blank",
-            className: "inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-bold shadow-lg transform hover:scale-105 transition"
-          }, "▶️ JOGAR AGORA")
+          React.createElement("a", { href: launchUrl, target: "_blank", className: "inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-full font-bold" }, "▶️ JOGAR")
         ),
-
-        React.createElement("div", { className: "grid grid-cols-2 md:grid-cols-4 gap-4" },
+        React.createElement("div", { className: "grid grid-cols-4 gap-4" },
           games.map(g =>
             React.createElement("button", {
               key: g.id,
@@ -234,9 +299,7 @@
       );
     };
 
-    ReactDOM.createRoot(document.getElementById("root")).render(
-      React.createElement(App)
-    );
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
   </script>
 </body>
 
