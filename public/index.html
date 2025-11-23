@@ -85,9 +85,39 @@
       );
     };
 
+    const Modal = ({ isOpen, onClose, title, children }) => {
+      if (!isOpen) return null;
+      return React.createElement("div", { className: "fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" },
+        React.createElement("div", { className: "bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" },
+          React.createElement("div", { className: "flex justify-between items-center p-6 border-b border-slate-800" },
+            React.createElement("h3", { className: "text-xl font-bold" }, title),
+            React.createElement("button", { onClick: onClose, className: "text-slate-400 hover:text-white" }, "✕")
+          ),
+          React.createElement("div", { className: "p-6" }, children)
+        )
+      );
+    };
+
     const AgentsList = () => {
       const [agents, setAgents] = useState([]);
       const [loading, setLoading] = useState(true);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+
+      // Form State
+      const [formData, setFormData] = useState({
+        agent_code: '',
+        saldo: 0,
+        agent_token: '',
+        secret_key: '',
+        probganho: '50',
+        probbonus: '10',
+        probganhortp: '95',
+        probganhoinfluencer: '60',
+        probbonusinfluencer: '20',
+        probganhoaposta: '40',
+        probganhosaldo: '30',
+        callbackurl: ''
+      });
 
       useEffect(() => {
         fetch(`${API_BASE_URL}/api/v1/agents`)
@@ -99,26 +129,31 @@
           .catch(err => setLoading(false));
       }, []);
 
-      const createAgent = async () => {
-        const code = prompt("Nome do Agent (Code):", "agent_01");
-        if (!code) return;
+      const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+      };
 
+      const handleSubmit = async (e) => {
+        e.preventDefault();
         await fetch(`${API_BASE_URL}/api/v1/createagent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ agent_code: code, saldo: 1000 })
+          body: JSON.stringify(formData)
         });
-        window.location.reload(); // Simple reload to refresh
+        setIsModalOpen(false);
+        window.location.reload();
       };
 
       return React.createElement("div", { className: "p-8" },
         React.createElement("div", { className: "flex justify-between items-center mb-6" },
           React.createElement("h2", { className: "text-3xl font-bold" }, "Gerenciar Agentes"),
           React.createElement("button", {
-            onClick: createAgent,
+            onClick: () => setIsModalOpen(true),
             className: "bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-bold"
           }, "+ Novo Agente")
         ),
+
         loading ? React.createElement("p", null, "Carregando...") :
           React.createElement("div", { className: "glass rounded-xl overflow-hidden" },
             React.createElement("table", { className: "w-full text-left" },
@@ -128,7 +163,8 @@
                   React.createElement("th", { className: "p-4" }, "Code"),
                   React.createElement("th", { className: "p-4" }, "Token"),
                   React.createElement("th", { className: "p-4" }, "Secret"),
-                  React.createElement("th", { className: "p-4" }, "Saldo")
+                  React.createElement("th", { className: "p-4" }, "Saldo"),
+                  React.createElement("th", { className: "p-4" }, "Prob. Ganho")
                 )
               ),
               React.createElement("tbody", null,
@@ -138,12 +174,43 @@
                     React.createElement("td", { className: "p-4 font-bold" }, agent.agentCode),
                     React.createElement("td", { className: "p-4 font-mono text-xs text-slate-400" }, agent.agentToken),
                     React.createElement("td", { className: "p-4 font-mono text-xs text-slate-400" }, agent.secretKey),
-                    React.createElement("td", { className: "p-4 text-green-400" }, `R$ ${agent.saldo}`)
+                    React.createElement("td", { className: "p-4 text-green-400" }, `R$ ${agent.saldo}`),
+                    React.createElement("td", { className: "p-4" }, `${agent.probganho}%`)
                   )
                 )
               )
             )
+          ),
+
+        React.createElement(Modal, { isOpen: isModalOpen, onClose: () => setIsModalOpen(false), title: "Adicionar Novo Agente" },
+          React.createElement("form", { onSubmit: handleSubmit, className: "grid grid-cols-1 md:grid-cols-2 gap-4" },
+            // Basic Info
+            React.createElement("div", { className: "col-span-2" }, React.createElement("h4", { className: "text-blue-400 font-bold mb-2" }, "Informações Básicas")),
+            React.createElement("input", { name: "agent_code", placeholder: "Agent Code", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange, required: true }),
+            React.createElement("input", { name: "saldo", type: "number", placeholder: "Saldo Inicial", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange, required: true }),
+
+            // Credentials (Optional)
+            React.createElement("div", { className: "col-span-2" }, React.createElement("h4", { className: "text-blue-400 font-bold mb-2 mt-2" }, "Credenciais (Opcional - Gerado Auto)")),
+            React.createElement("input", { name: "agent_token", placeholder: "Agent Token (Opcional)", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "secret_key", placeholder: "Secret Key (Opcional)", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+
+            // Probabilities
+            React.createElement("div", { className: "col-span-2" }, React.createElement("h4", { className: "text-blue-400 font-bold mb-2 mt-2" }, "Probabilidades (%)")),
+            React.createElement("input", { name: "probganho", placeholder: "Prob. Ganho", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "probbonus", placeholder: "Prob. Bonus", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "probganhortp", placeholder: "Prob. Ganho RTP", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "probganhoinfluencer", placeholder: "Prob. Ganho Influencer", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "probbonusinfluencer", placeholder: "Prob. Bonus Influencer", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "probganhoaposta", placeholder: "Prob. Ganho Aposta", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+            React.createElement("input", { name: "probganhosaldo", placeholder: "Prob. Ganho Saldo", className: "bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+
+            // Integration
+            React.createElement("div", { className: "col-span-2" }, React.createElement("h4", { className: "text-blue-400 font-bold mb-2 mt-2" }, "Integração")),
+            React.createElement("input", { name: "callbackurl", placeholder: "Callback URL", className: "col-span-2 bg-slate-800 p-3 rounded border border-slate-700 text-white", onChange: handleInputChange }),
+
+            React.createElement("button", { type: "submit", className: "col-span-2 bg-green-600 hover:bg-green-700 p-3 rounded font-bold mt-4 text-white" }, "Salvar Agente")
           )
+        )
       );
     };
 

@@ -213,10 +213,23 @@ export default {
       const secretKey = req.body.secretKey || req.body.secret_key
       const saldo = parseFloat(req.body.saldo || req.body.balance || 0)
 
+      const probganho = req.body.probganho || '0'
+      const probbonus = req.body.probbonus || '0'
+      const probganhortp = req.body.probganhortp || '0'
+      const probganhoinfluencer = req.body.probganhoinfluencer || '0'
+      const probbonusinfluencer = req.body.probbonusinfluencer || '0'
+      const probganhoaposta = req.body.probganhoaposta || '0'
+      const probganhosaldo = req.body.probganhosaldo || '0'
+      const callbackurl = req.body.callbackurl || ''
+
       try {
          const at = agentToken || v4()
          const sk = secretKey || v4()
-         const created = await apifunctions.createagent(agentCode, at, sk, saldo)
+         const created = await apifunctions.createagent(
+            agentCode, at, sk, saldo,
+            probganho, probbonus, probganhortp, probganhoinfluencer,
+            probbonusinfluencer, probganhoaposta, probganhosaldo, callbackurl
+         )
          if (created && (created as any).affectedRows > 0) {
             res.send({ status: 'success', agentToken: at, secretKey: sk })
          } else {

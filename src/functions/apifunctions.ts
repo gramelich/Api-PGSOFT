@@ -26,10 +26,32 @@ export default {
       const res = await promisePool.query<ResultSetHeader>("UPDATE agents SET probganho = ?,probbonus = ?,probganhortp = ?,probganhoinfluencer = ?,probbonusinfluencer = ?,probganhoaposta = ?,probganhosaldo = ? WHERE id=", [probganho, probbonus, probganhortp, probganhoinfluencer, probbonusinfluencer, probganhoaposta, probganhosaldo, id])
       return res[0]
    },
-   async createagent(agentCode: string, agentToken: string, secretKey: string, saldo: number) {
+   async createagent(
+      agentCode: string,
+      agentToken: string,
+      secretKey: string,
+      saldo: number,
+      probganho: string,
+      probbonus: string,
+      probganhortp: string,
+      probganhoinfluencer: string,
+      probbonusinfluencer: string,
+      probganhoaposta: string,
+      probganhosaldo: string,
+      callbackurl: string
+   ) {
       // agents.id in the schema may not be AUTO_INCREMENT; insert using MAX(id)+1 to be safe
-      const sql = `INSERT INTO agents (id, agentCode, saldo, agentToken, secretKey) SELECT IFNULL(MAX(id),0)+1, ?, ?, ?, ? FROM agents`;
-      const res = await promisePool.query<ResultSetHeader>(sql, [agentCode, saldo, agentToken, secretKey]);
+      const sql = `INSERT INTO agents (
+         id, agentCode, saldo, agentToken, secretKey, 
+         probganho, probbonus, probganhortp, probganhoinfluencer, 
+         probbonusinfluencer, probganhoaposta, probganhosaldo, callbackurl
+      ) SELECT IFNULL(MAX(id),0)+1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM agents`;
+
+      const res = await promisePool.query<ResultSetHeader>(sql, [
+         agentCode, saldo, agentToken, secretKey,
+         probganho, probbonus, probganhortp, probganhoinfluencer,
+         probbonusinfluencer, probganhoaposta, probganhosaldo, callbackurl
+      ]);
       return res[0];
    },
    async getAllAgents() {
